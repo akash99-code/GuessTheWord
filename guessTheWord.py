@@ -1,12 +1,13 @@
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt5.QtGui import QRegExpValidator, QFont, QColor
 from PyQt5.QtCore import QRegExp, Qt
 import threading
 import sys
 import random
 import time
+import pandas as pd
 
 class MyWindow(QMainWindow):
     def __init__(self):
@@ -17,8 +18,7 @@ class MyWindow(QMainWindow):
         self.setWindowTitle('Guess The Word')
         self.setStyleSheet("background-color: white;")
         self.initUI()
-        threading.Thread(target=self.simulate).start()
-        #self.simulate()
+        threading.Thread(target=self.startGame).start()
     
     def initUI(self):
         
@@ -29,7 +29,7 @@ class MyWindow(QMainWindow):
         self.txtbox.setValidator(validator)
 
         self.chances = QtWidgets.QLabel(self)
-        self.chances.setText("remaining chances - 100")
+        self.chances.setText("remaining attempts - 0")
         self.chances.setGeometry(500,30, 180,31)
         self.chances.setStyleSheet("font: 12pt 'Comic Sans MS'; color: rgb(149, 141, 139); ")
 
@@ -52,12 +52,18 @@ class MyWindow(QMainWindow):
         self.status.setStyleSheet('font: 12pt "Comic Sans MS";color: rgb(255, 135, 65);')
         self.status.setAlignment(Qt.AlignCenter)
 
-        self.running=True
+        self.ins = QtWidgets.QLabel(self)
+        self.ins.setText("")
+        self.ins.setGeometry(513,375,200,21)
+        self.ins.setStyleSheet('font: 7.5pt ;color: rgb(0,0,0);')
+        self.ins.setAlignment(Qt.AlignCenter)
 
         
     
     def getWord(self, level=0):
-        self.Word='DISTRCI'
+        col=level
+        ind=random.randint(0,499)
+        self.Word=(self.df.iloc[ind,col]).upper()
     
     def generate(self):
         L= len(self.Word)
@@ -114,7 +120,7 @@ class MyWindow(QMainWindow):
         self.getWord()
         self.generate()
         chance = 7
-        while( (chance!=0) and (False in self.filWord) ):=
+        while( (chance!=0) and (False in self.filWord) ):
             self.chances.setText("Chances Remaining - "+str(chance))
             self.displayW()
             self.txtbox.setText('')
@@ -122,30 +128,46 @@ class MyWindow(QMainWindow):
             self.charac.setText(ch)
             s = self.checks(ch)
             if s==-1:
-                self.status.setText('Wrong Guess!')
+                self.status.setText('Oh Bad Guess !')
                 chance-=1
                 continue
             if s==0:
-                self.status.setText('Try New Alphabet')
+                self.status.setText('Try New Alphabet.')
                 continue
             if s==1:
-                self.status.setText('Awesome, nice guess')
+                self.status.setText('Awesome, Nice Guess $')
                 continue
 
         if(not(False in self.filWord)):
-            self.status.setText('Voila!! you have cracked the word')
+            self.status.setText('Voila !! you have cracked the word')
         else:
             self.chances.setText("Chances Remaining - 0")
-            self.status.setText('Chances perished! better luck next time ')
+            self.status.setText('Chances Perished! Better Luck Next Time ')
         
+        self.txtbox.setText('')
         self.questWord.setText(self.Word)
+        self.ins.setText('Press N to Try New Word . . .')
         return
-               
+
+    def startGame(self):
+        self.df=pd.read_csv('words.csv', header=None)
+        while True:
+            try:
+                self.simulate()
+            except:
+                return
+            try:
+                x=self.inp()
+                self.ins.setText("")
+                self.status.setText("~ Guess and Press the Alphabet ~")
+                self.charac.setText("?")
+            except:
+                return
 
 
     
     
-def window():
+if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = MyWindow()
     win.show()
@@ -154,4 +176,3 @@ def window():
     except:
         print('game terminated')
 
-window()
